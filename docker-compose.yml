@@ -1,0 +1,39 @@
+version: '3.8'
+
+name: raksul
+
+services:
+  api:
+    container_name: be-api
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    env_file:
+    - .env
+    # Run a command against the development stage of the image
+    command: yarn start:dev
+    ports:
+      - 3001:3001
+    links:
+        - database
+    depends_on:
+        - database  
+  database:
+      container_name: raksul-database
+      image: mysql:8.0
+      restart: unless-stopped
+      ports:
+          - "${MYSQL_PORT}:3306"
+      environment:
+          MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+          MYSQL_DATABASE: ${MYSQL_DATABASE}
+          MYSQL_HOST: ${MYSQL_HOST}    
+      volumes:
+        - mysql:/var/lib/mysql
+
+volumes:
+  mysql:        

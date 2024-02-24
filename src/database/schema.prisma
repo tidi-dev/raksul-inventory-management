@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String @id @default(uuid())
+  full_name    String
+  phone_number String @unique
+  password     String
+
+  last_login_at DateTime @default(now())
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("user")
+}
+
+model Manufacturer {
+  id             String          @id @default(uuid())
+  name           String          @db.Text
+  product_series ProductSeries[]
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("manufacturer")
+}
+
+model ProductSeries {
+  id              String @id @default(uuid())
+  manufacturer_id String
+  name            String @db.Text
+  release_year    Int
+
+  manufacturer   Manufacturer   @relation(fields: [manufacturer_id], references: [id])
+  product_models ProductModel[]
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("product_series")
+}
+
+model ProductModel {
+  id                String @id @default(uuid())
+  product_series_id String
+  name              String @db.Text
+
+  product_series  ProductSeries    @relation(fields: [product_series_id], references: [id])
+  product_variant ProductVariant[]
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("product_model")
+}
+
+model Configuration {
+  id String @id @default(uuid())
+
+  ram              Int
+  color            String @db.VarChar(100)
+  storage_capacity String @db.VarChar(50)
+  os_version       String @db.VarChar(50)
+
+  product_variant ProductVariant[]
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@unique(fields: [ram, color, storage_capacity, os_version], name: "configuration_unique_key")
+  @@map("configuration")
+}
+
+model ProductVariant {
+  id               String @id @default(uuid())
+  product_model_id String
+  configuration_id String
+
+  imei String @unique
+
+  product_model ProductModel  @relation(fields: [product_model_id], references: [id])
+  configuration Configuration @relation(fields: [configuration_id], references: [id])
+
+  inventory Inventory?
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("product_variant")
+}
+
+model Inventory {
+  id                 String  @id @default(uuid())
+  product_variant_id String  @unique
+  price              Decimal @db.Decimal(9, 2)
+  quantity           Int
+
+  product_variant ProductVariant @relation(fields: [product_variant_id], references: [id])
+
+  created_by String?
+  created_at DateTime @default(now())
+  updated_by String?
+  updated_at DateTime @updatedAt
+
+  @@map("inventory")
+}
